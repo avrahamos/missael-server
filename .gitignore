@@ -2,3 +2,6 @@
 .env
 /dist
 /dist/app.js
+dist/app.js
+dist/socket/io.js
+dist/app.js
