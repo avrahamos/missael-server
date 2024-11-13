@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { attack, getMyMisseles } from "../controllers/teroristController";
+import { attack, getMyMissiles } from "../controllers/teroristController";
 const routr = Router();
 
-routr.get('/:organizationId',getMyMisseles)
+routr.get('/:organizationId',getMyMissiles)
 routr.post("/:organizationId/:attak" ,attack);
 
 export default routr;
