@@ -4,3 +4,11 @@ export enum Location {
   CENTER = "IDF - Center",
   WEST_BANK = "IDF - West Bank",
 }
+
+export enum TeroristOrganizaton {
+  IDF = "IDF",
+  Hezbollah = "Hezbollah",
+  Hamas = "Hamas",
+  IRGC = "IRGC",
+  Houthis = "Houthis",
+}

@@ -1,9 +1,10 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { TeroristOrganizaton } from "../types/enums/location";
 
 export interface ITerorist extends Document {
   userName: string;
   password: string;
-  organization: string;
+  organization: TeroristOrganizaton;
 }
 
 const teroristSchema = new Schema<ITerorist>({
