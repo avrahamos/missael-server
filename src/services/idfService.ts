@@ -1,58 +1,35 @@
-import { Server, Socket } from "socket.io";
-import { calculateMissileTimes, loadInitialOrganizationData } from "../utils/utils";
+import { loadInitialOrganizationData } from "../utils/utils";
 import { IOrganization } from "../types/types";
-export const getMyDefensesService = (io:Server, socket:Socket) => {
-  socket.on("getDefenses", async (data) => {
-    try {
-      const { location } = data;
+import { calculateMissileTimes } from "../utils/utils";
 
-      if (!location) {
-        return socket.emit("error", { message: "Location is required" });
-      }
-
-      const organizationsData = await loadInitialOrganizationData();
-
-      const locationData = organizationsData.find(
-        (org:IOrganization) => org.name === location
-      );
-
-      if (!locationData) {
-        return socket.emit("error", { message: "Defense systems not found" });
-      }
-
-      socket.emit("defenseData", locationData.resources);
-    } catch (error) {
-      socket.emit("error", { message: "Failed to retrieve defense data" });
-    }
-  });
+export const getMyDefensesService = async (
+  location: string
+): Promise<IOrganization | null> => {
+  const organizationsData = await loadInitialOrganizationData();
+  return organizationsData.find((org:IOrganization) => org.name === location) || null;
 };
 
-export const defenseMissileLauncherService = (io:Server, socket:Socket) => {
-  socket.on("interceptMissile", (data) => {
-    try {
-      const { defenseName, missileSpeed, distance, interceptSpeed } = data;
 
-      if (!defenseName || !missileSpeed || !distance || !interceptSpeed) {
-        return socket.emit("error", { message: "Missing required fields" });
-      }
 
-      const { missileTime, interceptTime, canIntercept } =
-        calculateMissileTimes(missileSpeed, distance, interceptSpeed);
+export const defenseMissileLauncherService = async ({
+  defenseName,
+  missileSpeed,
+  distance,
+  interceptSpeed,
+}: {
+  defenseName: string;
+  missileSpeed: number;
+  distance: number;
+  interceptSpeed: number;
+}): Promise<{ success: boolean; interceptTime: number } | null> => {
+  const { missileTime, interceptTime, canIntercept } = calculateMissileTimes(
+    missileSpeed,
+    distance,
+    interceptSpeed
+  );
 
-      if (canIntercept) {
-        io.emit("missileIntercepted", {
-          defenseName,
-          success: true,
-          interceptTime,
-        });
-      } else {
-        io.emit("missileIntercepted", {
-          defenseName,
-          success: false,
-        });
-      }
-    } catch (error) {
-      socket.emit("error", { message: "Failed to intercept missile" });
-    }
-  });
+  return {
+    success: canIntercept,
+    interceptTime,
+  };
 };
