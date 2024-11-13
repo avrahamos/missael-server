@@ -1,11 +1,15 @@
-import { Location } from "../enums/location";
+import { Location, Organizaton } from "../enums/location";
 
 export interface LoginDto {
-  userName: string;
+  email: string;
   password: string;
 }
 
-export interface RegisterDto extends LoginDto {
-  organization: string;
+
+export interface RegisterDto  {
+  userName: string;
+  email: string;
+  password: string;
+  organization: Organizaton;
   location?: Location;
 }
