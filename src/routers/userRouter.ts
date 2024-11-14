@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { login, register } from "../controllers/userController";
-const routr= Router()
+import { getUserProfile, login, register } from "../controllers/userController";
+const userRoutr= Router()
 
-routr.post('/login' , login)
-routr.post("/register", register);
-
-export default routr
+userRoutr.post("/login", login);
+userRoutr.post("/register", register);
+userRoutr.get("/profile", getUserProfile);
+export default userRoutr;

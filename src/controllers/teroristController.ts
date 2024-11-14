@@ -1,59 +1,81 @@
 import { Socket } from "socket.io";
-import { getMyMissilesService, launchMissileAndUpdateResources } from "../services/teroristService";
+import {
+  getMyMissilesService,
+  launchMissileAndUpdateResources,
+} from "../services/teroristService";
+import { CustomSocket } from "../types/types";
 
-export const getMyMissiles = (socket: Socket) => {
-  socket.on("getMissiles", async (data: { organization: string }) => {
-    try {
-      const { organization } = data;
+export const getMyMissiles = (
+  socket: CustomSocket,
+  data: { organization: string }
+): void => {
 
-      if (!organization) {
-        return socket.emit("error", { message: "Organization is required" });
+  if (!socket.data.user) {
+    console.error("[getMissiles] User not authenticated");
+    socket.emit("error", { message: "User not authenticated" });
+    return;
+  }
+
+  if (!data.organization) {
+    console.error("[getMissiles] Organization data missing from client");
+    socket.emit("error", { message: "Organization data missing" });
+    return;
+  }
+
+  if (socket.data.user.organization !== data.organization) {
+    console.error(
+      "[getMissiles] Access denied: User's organization does not match",
+      {
+        userOrg: socket.data.user.organization,
+        requestedOrg: data.organization,
       }
+    );
+    socket.emit("error", {
+      message: "Access denied: Unauthorized organization",
+    });
+    return;
+  }
+}
 
-      const missiles = await getMyMissilesService(organization);
-      if (!missiles) {
-        return socket.emit("error", { message: "Organization not found" });
-      }
+export const attack = (
+  socket: Socket,
+  data: { organization: string; missileName: string; distance: number }
+): void => {
 
-      socket.emit("missilesData", missiles.resources);
-    } catch (error) {
-      socket.emit("error", { message: "Failed to retrieve missiles", error });
-    }
-  });
-};
+  const user = socket.data.user;
+  if (!user) {
+    console.error("[attack] User not authenticated");
+    socket.emit("error", { message: "User not authenticated" });
+    return;
+  }
 
+  if (!data.organization || user.organization !== data.organization) {
+    console.error("[attack] Unauthorized access: Organization mismatch");
+    socket.emit("error", {
+      message: "Access denied: Unauthorized organization",
+    });
+    return;
+  }
 
-export const attack = (socket: Socket) => {
-  socket.on(
-    "attack",
-    async (data: {
-      organization: string;
-      missileName: string;
-      distance: number;
-    }) => {
-      try {
-        const { organization, missileName, distance } = data;
+ 
 
-        if (!organization || !missileName || !distance) {
-          return socket.emit("error", { message: "Missing required fields" });
-        }
-
-        const result = await launchMissileAndUpdateResources({
-          organization,
-          missileName,
-          distance,
+  try {
+    launchMissileAndUpdateResources(data).then((result) => {
+      if (!result) {
+        console.error(
+          "[attack] Launch failed: No missile available or invalid organization"
+        );
+        socket.emit("error", {
+          message: "Attack failed: No missile available",
         });
-        if (!result) {
-          return socket.emit("error", {
-            message:
-              "Attack failed: Missile not available or organization not found",
-          });
-        }
-
-        socket.emit("attackSuccess", result);
-      } catch (error) {
-        socket.emit("error", { message: "Failed to execute attack", error });
+        return;
       }
-    }
-  );
+
+     
+      socket.emit("attackSuccess", result);
+    });
+  } catch (error) {
+    console.error(" Error during missile launch:", error);
+    socket.emit("error", { message: "Failed to execute attack", error });
+  }
 };

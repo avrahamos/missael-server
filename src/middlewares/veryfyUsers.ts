@@ -1,70 +1,27 @@
-import { NextFunction, Request, Response } from "express";
-import jwt, { JsonWebTokenError } from "jsonwebtoken";
+import { CustomSocket, UserPayload } from "../types/types";
+import jwt from 'jsonwebtoken'
+export const verifySocketToken = (
+  socket: CustomSocket,
+  next: (err?: Error) => void
+): void => {
+  const token = socket.handshake.auth.token;
 
-const verifyToken = (req: Request, res: Response): string | null => {
-  const authHeader = req.headers["authorization"];
-  if (!authHeader) {
-    res.status(401).json({ error: "Token must be provided" });
-    return null;
-  }
-
-  const token = authHeader.split(" ")[1];
   if (!token) {
-    res.status(401).json({ error: "Invalid token format" });
-    return null;
+    return next(new Error(" Token must provided"));
   }
 
-  return token;
-};
-
-export const onliIdf = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
   try {
-    const token = verifyToken(req, res);
-    if (!token) return;
+    const payload = jwt.verify(
+      token,
+      process.env.JWT_SECRET as string
+    ) as UserPayload;
 
-    const payload = jwt.verify(token, process.env.JWT_SECRET as string) as any;
-    if (payload.organization !== "IDF") {
-      res.status(403).json({ error: "Access denied: IDF only" });
-      return;
-    }
 
-    (req as any).user = payload;
+    socket.data.user = payload;
+
     next();
   } catch (error) {
-    if (error instanceof JsonWebTokenError) {
-      res.status(401).json({ error: "Invalid token" });
-    } else {
-      res.status(500).json({ error: "Internal server error" });
-    }
-  }
-};
-
-export const onlyTerorist = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
-  try {
-    const token = verifyToken(req, res);
-    if (!token) return;
-
-    const payload = jwt.verify(token, process.env.JWT_SECRET as string) as any;
-    if (payload.organization === "IDF") {
-      res.status(403).json({ error: "Access denied: Terorists only" });
-      return;
-    }
-
-    (req as any).user = payload;
-    next();
-  } catch (error) {
-    if (error instanceof JsonWebTokenError) {
-      res.status(401).json({ error: "Invalid token" });
-    } else {
-      res.status(500).json({ error: "Internal server error" });
-    }
+    console.error("Authentication error :", error);
+    next(new Error(" Invalid token"));
   }
 };

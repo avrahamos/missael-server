@@ -1,3 +1,5 @@
+import { Socket } from "socket.io";
+
 export interface GetDefensesData {
   location: string;
 }
@@ -9,9 +11,6 @@ export interface InterceptMissileData {
   interceptSpeed: number;
 }
 
-export interface GetMissilesData {
-  organization: string;
-}
 
 export interface LaunchMissileData {
   organization: string;
@@ -28,4 +27,16 @@ export interface IResource {
 export interface IOrganization {
   name: string;
   resources: IResource[];
+}
+export interface UserPayload {
+  userId: string;
+  email: string;
+  organization: string;
+  location: string;
+}
+
+export interface CustomSocket extends Socket {
+ 
+    user?: UserPayload;
+  
 }

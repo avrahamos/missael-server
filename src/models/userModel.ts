@@ -39,7 +39,7 @@ const userSchema = new Schema<IUser>({
 
 userSchema.pre("validate", function (next) {
   if (this.organization === Organizaton.IDF && !this.location) {
-    next(new Error("Location is required for IDF organization."));
+    next(new Error("Location is required for IDF "));
   } else {
     next();
   }
