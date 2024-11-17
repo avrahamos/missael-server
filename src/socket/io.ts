@@ -25,9 +25,7 @@ export const setupSocketServer = (httpServer: any): Server => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as UserPayload;
       socket.data.user = decoded;
-      console.log(
-        `User authenticated: ${decoded.organization}, Location: ${decoded.location}`
-      );
+     
       next();
     } catch (error) {
       console.error("Authentication error: invalid token");
@@ -43,20 +41,15 @@ export const setupSocketServer = (httpServer: any): Server => {
     }
 
     const userOrganization = socket.data.user.organization;
-    console.log(`User connected with organization: ${userOrganization}`);
 
     if (userOrganization === "IDF") {
       socket.join("idf-room");
-      console.log(`User with socket ID ${socket.id} added to idf-room`);
     } else {
-      console.log(`User with socket ID ${socket.id} is not part of IDF`);
     }
 
     socket.on("getDefenses", async (data, callback) => {
       try {
-        console.log(`Fetching defenses for location: ${data.location}`);
         const defenses = await getMyDefensesService(data.location);
-        console.log(`Defenses fetched: ${JSON.stringify(defenses)}`);
         callback({ success: true, data: defenses });
       } catch (error) {
         console.error(
@@ -69,10 +62,8 @@ export const setupSocketServer = (httpServer: any): Server => {
 
     socket.on("getMissiles", async (data, callback) => {
       try {
-        console.log("Request for missiles:", data);
         const missilesData = await getMyMissilesService(data.organization);
         if (missilesData && missilesData.resources) {
-          console.log("Missiles found:", missilesData.resources);
           callback({ success: true, data: missilesData.resources });
         } else {
           console.warn(
@@ -93,10 +84,8 @@ export const setupSocketServer = (httpServer: any): Server => {
     socket.on("interceptMissile", async (data, callback) => {
       try {
         const { missileName } = data;
-        console.log(`Intercepting missile: ${missileName}`);
 
         io.emit("missileIntercepted", { missileName });
-        console.log(`Missile intercepted and event emitted to all users`);
         callback({
           success: true,
           message: `Missile ${missileName} intercepted successfully`,
@@ -109,8 +98,6 @@ export const setupSocketServer = (httpServer: any): Server => {
 
     socket.on("launchMissile", async (data, callback) => {
       try {
-        console.log(`[launchMissile] Organization: ${data.organization}`);
-        console.log(`[launchMissile] Target: ${data.target}`);
         const target = data.target || "Unknown Target";
 
         const launchResult = await launchMissileAndUpdateResources(data);
@@ -120,22 +107,13 @@ export const setupSocketServer = (httpServer: any): Server => {
           return;
         }
 
-        console.log(
-          `[launchMissile] Broadcasting missileLaunched event to IDF users`
-        );
-
         const socketsInRoom = await io.in("idf-room").fetchSockets();
-        console.log(`Sockets in idf-room: ${socketsInRoom.map((s) => s.id)}`);
 
         io.to("idf-room").emit("missileLaunched", {
           missileName: launchResult.missileName,
           target: target,
           launchedBy: socket.data.user.organization,
         });
-
-        console.log(
-          `[launchMissile] Missile launched event emitted to idf-room`
-        );
 
         callback({
           success: true,
@@ -147,9 +125,7 @@ export const setupSocketServer = (httpServer: any): Server => {
       }
     });
 
-    socket.on("disconnect", () => {
-      console.log(`Socket disconnected: ${socket.id}`);
-    });
+    socket.on("disconnect", () => {});
   });
 
   return io;
