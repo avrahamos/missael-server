@@ -6,12 +6,10 @@ import { calculateMissileTimes } from "../utils/utils";
 export const getMyDefensesService = async (
   location: string
 ): Promise<IOrganization | null> => {
-
   try {
     const filePath = path.join(__dirname, "../data/organizations.json");
     const data = await fs.readFile(filePath, "utf-8");
     const organizations: IOrganization[] = JSON.parse(data);
-
 
     const locationData = organizations.find((org) => org.name === location);
     if (!locationData) {
@@ -25,13 +23,18 @@ export const getMyDefensesService = async (
     throw error;
   }
 };
+
 export const defenseMissileLauncherService = async (data: {
   defenseName: string;
   missileSpeed: number;
   distance: number;
   interceptSpeed: number;
-}): Promise<{ success: boolean; interceptTime: number } | null> => {
-
+  missileName: string; 
+}): Promise<{
+  success: boolean;
+  interceptTime: number;
+  matchingInterceptors?: any[];
+} | null> => {
   const handleInterception = (
     missileSpeed: number,
     interceptSpeed: number
@@ -42,16 +45,40 @@ export const defenseMissileLauncherService = async (data: {
     );
 
     if (!canIntercept) {
-      console.error(
-        " interception failed. Interception too late."
-      );
+      console.error("Interception failed. Interception too late.");
       return { success: false, interceptTime: interceptTime - missileTime };
     }
 
     return { success: true, interceptTime: interceptTime - missileTime };
   };
 
+  const findMatchingInterceptors = (
+    missileName: string,
+    interceptors: any[]
+  ) => {
+    return interceptors.filter((interceptor) =>
+      interceptor.intercepts.includes(missileName)
+    );
+  };
+
+  const interceptorsPath = path.join(__dirname, "../data/interceptors.json");
+  const interceptorsData = await fs.readFile(interceptorsPath, "utf-8");
+  const interceptors = JSON.parse(interceptorsData);
+
+  // חיפוש מיירטים מתאימים
+  const matchingInterceptors = findMatchingInterceptors(
+    data.missileName,
+    interceptors
+  );
+
+  if (!matchingInterceptors.length) {
+    console.error(
+      `No matching interceptors found for missile ${data.missileName}`
+    );
+    return { success: false, interceptTime: 0 };
+  }
+
   const result = handleInterception(data.missileSpeed, data.interceptSpeed);
 
-  return Promise.resolve(result);
+  return { ...result, matchingInterceptors };
 };

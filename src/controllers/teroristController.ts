@@ -9,9 +9,8 @@ export const getMyMissiles = (
   socket: CustomSocket,
   data: { organization: string }
 ): void => {
-
   if (!socket.data.user) {
-    console.error("[getMissiles] User not authenticated");
+    console.error("getMissiles User not authenticated");
     socket.emit("error", { message: "User not authenticated" });
     return;
   }
@@ -35,13 +34,12 @@ export const getMyMissiles = (
     });
     return;
   }
-}
+};
 
 export const attack = (
   socket: Socket,
   data: { organization: string; missileName: string; distance: number }
 ): void => {
-
   const user = socket.data.user;
   if (!user) {
     console.error("[attack] User not authenticated");
@@ -57,8 +55,6 @@ export const attack = (
     return;
   }
 
- 
-
   try {
     launchMissileAndUpdateResources(data).then((result) => {
       if (!result) {
@@ -71,7 +67,25 @@ export const attack = (
         return;
       }
 
-     
+      getMyMissilesService(data.organization).then((missiles) => {
+        const missile = missiles?.resources.find(
+          (m: any) => m.name === data.missileName
+        );
+        if (missile && missile.amount > 0) {
+          missile.amount -= 1;
+          socket.emit("updateMissiles", {
+            success: true,
+            message: `Missile launched: ${data.missileName}. Remaining missiles: ${missile.amount}`,
+            missiles: missiles?.resources,
+          });
+        } else {
+          socket.emit("error", {
+            message: `No missiles left for ${data.missileName}`,
+          });
+          return;
+        }
+      });
+
       socket.emit("attackSuccess", result);
     });
   } catch (error) {

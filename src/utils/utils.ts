@@ -17,12 +17,21 @@ export const calculateMissileTimes = (
   missileSpeed: number,
   interceptSpeed: number
 ) => {
-  const missileTime =  missileSpeed; 
-  const interceptTime =  interceptSpeed; 
+  const missileTime = missileSpeed;
+  const interceptTime = interceptSpeed;
 
   return {
     missileTime,
     interceptTime,
-    canIntercept: interceptTime - missileTime > 0
+    canIntercept: interceptTime - missileTime > 0,
   };
+};
+
+export const findMatchingInterceptors = (
+  missileName: string,
+  interceptors: any[]
+) => {
+  return interceptors.filter((interceptor) =>
+    interceptor.intercepts.includes(missileName)
+  );
 };
