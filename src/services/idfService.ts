@@ -65,7 +65,6 @@ export const defenseMissileLauncherService = async (data: {
   const interceptorsData = await fs.readFile(interceptorsPath, "utf-8");
   const interceptors = JSON.parse(interceptorsData);
 
-  // חיפוש מיירטים מתאימים
   const matchingInterceptors = findMatchingInterceptors(
     data.missileName,
     interceptors

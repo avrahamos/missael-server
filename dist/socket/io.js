@@ -95,7 +95,6 @@ const setupSocketServer = (httpServer) => {
                     callback({ success: false, message: "Failed to launch missile" });
                     return;
                 }
-                const socketsInRoom = await io.in("idf-room").fetchSockets();
                 io.to("idf-room").emit("missileLaunched", {
                     missileName: launchResult.missileName,
                     target: target,

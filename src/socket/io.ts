@@ -107,7 +107,6 @@ export const setupSocketServer = (httpServer: any): Server => {
           return;
         }
 
-        const socketsInRoom = await io.in("idf-room").fetchSockets();
 
         io.to("idf-room").emit("missileLaunched", {
           missileName: launchResult.missileName,
